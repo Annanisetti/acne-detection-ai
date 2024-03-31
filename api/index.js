@@ -1,12 +1,41 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const tf = require('@tensorflow/tfjs');
+const { createCanvas, loadImage } = require('canvas');
+
 
 const User = require('./models/user.model.js');
 
 const app = express();
 app.use(express.json())
 
+const model = await.tf.loadLayers('./model.h5');
+
+async function preprocessImage(imageData) {
+    const canvas = createCanvas();
+    const ctx = canvas.getContext('2d');
+    const img = new loadImage(`data:image/jpeg;base64,${imageData}`)
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+
+    const resizedImage = tf.image.resizeBilinear(tf.browser.fromPixels(canvas), [224, 224]);
+    const normalizedImage = resizedImage.toFloat().div(tf.scalar(224));
+    const preprocessedImage = normalizedImage.expandDims();
+
+    return preprocessedImage;
+}
+
+
 // Endpoints
+
+app.post('/api/acne-detection', async (req, res) => {
+    const imageData = req.body['image'];
+    const preprocessedImage = await preprocessImage(imageData);
+
+    const predictions = model.predict(preprocessedImage);
+    res.status(200).json(predictions);
+});
 
 app.get('/', (req, res) => {
     res.send('root');
