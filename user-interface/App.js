@@ -3,6 +3,7 @@ import { StatusBar, TextInput } from 'react-native'; // Import TextInput from re
 import { StyleSheet, Text, View, Button, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library'; 
+import { enableLegacyWebImplementation } from 'react-native-gesture-handler';
 
 export default function App() {
   const [showLoginForm, setShowLoginForm] = useState(false);
@@ -17,6 +18,7 @@ export default function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageUploaded, setImageUploaded] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [journalEntries, setJournalEntries] = useState(0); // New state variable
 
   useEffect(() => {
     (async () => {
@@ -189,10 +191,49 @@ export default function App() {
     }
   };
 
-  const handleDetectAcne = () => {
-    // Perform acne detection
-    handleResult(); // Show results screen
+  const handleDetectAcne = async() => {
+    try {
+      // Check if an image has been selected
+      if (!selectedImage) {
+        console.error('No image selected');
+        return;
+      }
+      console.log('hello');
+      const apiUrl = 'http://10.186.125.30:3000/api/acne-detection';
+      console.log(apiUrl);
+  
+      // Create a new FormData object
+      const formData = new FormData();
+      // Append the selected image to the FormData object
+      formData.append('image', {
+        uri: selectedImage,
+        name: 'image.jpg',
+        type: 'image/jpeg',
+      });
+      console.log(formData);
+      
+      // Send the FormData object in the POST request
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+      console.log(response);
+      if (response.ok) {
+        console.log('Acne detection request successful');
+        // Handle response from the backend
+        const responseData = await response.json();
+        console.log('Acne detection response from backend:', responseData);
+        // Show results screen and increment journalEntries
+        journalEntries++;
+        handleResult();
+      } else {
+        console.error('Acne detection request failed');
+      }
+    } catch (error) {
+      console.error('Error during acne detection:', error);
+    }
   };
+  
 
   const handleResult = () => {
     setShowLoginForm(false);
@@ -261,7 +302,7 @@ export default function App() {
         <View style={styles.directoryContainer}>
           <Text style={styles.directoryText}>Directory</Text>
           <View style={styles.buttonGroup}>
-            <Button title="Acne Detector" onPress={handleAcneDetector} />
+            <Button title="Acne Scanner" onPress={handleAcneDetector} />
           </View>
           <View style={styles.buttonGroup}>
             <Button title="Insights" onPress={handleInsights} />
@@ -277,7 +318,7 @@ export default function App() {
 
       {showAcneDetector && (
         <View style={styles.acneDetectorContainer}>
-          <Text style={styles.acneDetectorText}>Acne Detector Screen</Text>
+          <Text style={styles.acneDetectorText}>Acne Scanner</Text>
           <View style={styles.buttonGroup}>
             <Button title="Upload Image" onPress={handleImageUpload} />
           </View>
@@ -296,15 +337,22 @@ export default function App() {
         </View>
       )}
 
-      {showJournal && (
-        <View style={styles.journalContainer}>
-          <Text style={styles.journalText}>Journal</Text>
-          <Text>No Scans available, please use the detector</Text>
-          <View style={styles.buttonGroup}>
-            <Button title="Directory" onPress={handleDirectoryBack} />
-          </View>
-        </View>
+{showJournal && (
+    <View style={styles.journalContainer}>
+      <Text style={styles.journalText}>Journal</Text>
+      <Text>Here you can find your previous scans</Text>
+      {journalEntries > 0 ? (
+        // Display journal entries if journalEntries > 0
+        <Text>Display journal entries here</Text>
+      ) : (
+        // Display "No scans found" message if journalEntries = 0
+        <Text>No Scans Found!</Text>
       )}
+      <View style={styles.buttonGroup}>
+        <Button title="Directory" onPress={handleDirectoryBack} />
+      </View>
+    </View>
+  )}
 
       {showInsights && (
         <View style={styles.insightsContainer}>
