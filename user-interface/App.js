@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StatusBar, TextInput } from 'react-native'; // Import TextInput from react-native
+import { StyleSheet, Text, View, Button, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library'; 
 
 export default function App() {
   const [showLoginForm, setShowLoginForm] = useState(false);
@@ -9,26 +11,100 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [showDirectory, setShowDirectory] = useState(false);
   const [showAcneDetector, setShowAcneDetector] = useState(false);
+  const [showJournal, setShowJournal] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
+  const [showDiscussion, setShowDiscussion] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageUploaded, setImageUploaded] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Login successful');
-    setShowLoginForm(false);
-    setShowSignUpForm(false);
-    setShowDirectory(true);
+  useEffect(() => {
+    (async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access camera roll is required!');
+      }
+    })();
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      console.log('Login successful');
+      setShowLoginForm(false);
+      setShowSignUpForm(false);
+      setShowDirectory(true);
+
+      const apiUrl = 'YOUR_LOGIN_API_URL';
+
+      // Check if username and password are not empty
+      if (username && password) {
+        // Send username and password to the backend
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        // Handle response from the backend
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log('Login response from backend:', responseData);
+        } else {
+          console.error('Login failed');
+        }
+      } else {
+        console.error('Username or password is missing');
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+    }
   };
 
-  const handleSignUp = () => {
-    console.log('Sign up successful');
-    setShowLoginForm(false);
-    setShowSignUpForm(false);
-    setShowDirectory(true);
+  const handleSignUp = async () => {
+    try {
+      console.log('Sign up successful');
+      setShowLoginForm(false);
+      setShowSignUpForm(false);
+      setShowDirectory(true);
+
+      const apiUrl = 'YOUR_SIGNUP_API_URL';
+
+      // Check if username and password are not empty
+      if (username && password) {
+        // Send username and password to the backend
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        // Handle response from the backend
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log('Signup response from backend:', responseData);
+        } else {
+          console.error('Signup failed');
+        }
+      } else {
+        console.error('Username or password is missing');
+      }
+    } catch (error) {
+      console.error('Error during signup:', error);
+    }
   };
 
   const handleHome = () => {
     setShowLoginForm(false);
     setShowSignUpForm(false);
     setShowDirectory(false);
-    setShowAcneDetector(false); // Reset Acne Detector screen visibility
+    setShowAcneDetector(false);
+    setShowJournal(false);
+    setShowInsights(false);
+    setShowDiscussion(false);
   };
 
   const handleAcneDetector = () => {
@@ -36,11 +112,97 @@ export default function App() {
     setShowSignUpForm(false);
     setShowDirectory(false);
     setShowAcneDetector(true);
+    setShowJournal(false);
+    setShowInsights(false);
+    setShowDiscussion(false);
   };
 
   const handleDirectoryBack = () => {
-    setShowAcneDetector(false); // Hide Acne Detector screen
-    setShowDirectory(true); // Show Directory screen
+    setShowAcneDetector(false);
+    setShowDirectory(true);
+    setShowJournal(false);
+    setShowInsights(false);
+    setShowDiscussion(false);
+  };
+
+  const handleJournal = () => {
+    setShowAcneDetector(false);
+    setShowDirectory(false);
+    setShowJournal(true);
+    setShowInsights(false);
+    setShowDiscussion(false);
+  };
+
+  const handleInsights = () => {
+    setShowLoginForm(false);
+    setShowSignUpForm(false);
+    setShowDirectory(false);
+    setShowAcneDetector(false);
+    setShowJournal(false);
+    setShowInsights(true);
+    setShowDiscussion(false);
+  };
+
+  const handleDiscussion = () => {
+    setShowLoginForm(false);
+    setShowSignUpForm(false);
+    setShowDirectory(false);
+    setShowAcneDetector(false);
+    setShowJournal(false);
+    setShowInsights(false);
+    setShowDiscussion(true);
+  };
+
+  const handleImageUpload = async () => {
+    try {
+      const pickerResult = await ImagePicker.launchImageLibraryAsync();
+      if (!pickerResult.cancelled && pickerResult.assets.length > 0) {
+        const uri = pickerResult.assets[0].uri;
+        setSelectedImage(uri); // Set the selected image URI state
+        setImageUploaded(true); // Set image uploaded state to true
+      }
+    } catch (error) {
+      console.log('Error picking image: ', error);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access camera is required!');
+        return;
+      }
+      
+      const pickerResult = await ImagePicker.launchCameraAsync();
+      if (!pickerResult.cancelled) {
+        const uri = pickerResult.assets[0].uri;
+        setSelectedImage(uri); // Set the selected image URI state
+        setImageUploaded(true); // Set image uploaded state to true
+        if (uri) {
+          await MediaLibrary.saveToLibraryAsync(uri);
+          alert('Photo saved to library!');
+        }
+      }
+    } catch (error) {
+      console.log('Error taking photo: ', error);
+    }
+  };
+
+  const handleDetectAcne = () => {
+    // Perform acne detection
+    handleResult(); // Show results screen
+  };
+
+  const handleResult = () => {
+    setShowLoginForm(false);
+    setShowSignUpForm(false);
+    setShowDirectory(false);
+    setShowAcneDetector(false);
+    setShowJournal(false);
+    setShowInsights(false);
+    setShowDiscussion(false);
+    setShowResults(true);
   };
 
   return (
@@ -49,11 +211,11 @@ export default function App() {
         <Text style={styles.headerText}>Derm Detector</Text>
       </View>
 
-      {!showDirectory && !showAcneDetector && (
-  <View style={styles.content}>
-    <Text>Add Logo Here Now</Text>
-  </View>
-)}
+      {!showDirectory && !showAcneDetector && !showJournal && !showInsights && !showDiscussion && !showResults &&(
+        <View style={styles.content}>
+          <Text>Add Logo Here Now</Text>
+        </View>
+      )}
 
       {showLoginForm && (
         <View style={styles.loginContainer}>
@@ -102,13 +264,13 @@ export default function App() {
             <Button title="Acne Detector" onPress={handleAcneDetector} />
           </View>
           <View style={styles.buttonGroup}>
-            <Button title="Insights" onPress={() => console.log('Insights')} />
+            <Button title="Insights" onPress={handleInsights} />
           </View>
           <View style={styles.buttonGroup}>
-            <Button title="Journal" onPress={() => console.log('Journal')} />
+            <Button title="Journal" onPress={handleJournal} />
           </View>
           <View style={styles.buttonGroup}>
-            <Button title="Discussion" onPress={() => console.log('Discussion')} />
+            <Button title="Discussion" onPress={handleDiscussion} />
           </View>
         </View>
       )}
@@ -117,10 +279,16 @@ export default function App() {
         <View style={styles.acneDetectorContainer}>
           <Text style={styles.acneDetectorText}>Acne Detector Screen</Text>
           <View style={styles.buttonGroup}>
-            <Button title="Upload Image" onPress={() => console.log('Upload Image')} />
+            <Button title="Upload Image" onPress={handleImageUpload} />
           </View>
+          {imageUploaded && (
+            <View style={styles.buttonGroup}>
+              <Button title="Detect Acne" onPress={handleDetectAcne} />
+            </View>
+          )}
+          {selectedImage && <Image source={{ uri: selectedImage }} style={styles.uploadedImage} />}
           <View style={styles.buttonGroup}>
-            <Button title="Take Photo" onPress={() => console.log('Take Photo')} />
+            <Button title="Take Photo" onPress={handleTakePhoto} />
           </View>
           <View style={styles.buttonGroup}>
             <Button title="Directory" onPress={handleDirectoryBack} />
@@ -128,7 +296,45 @@ export default function App() {
         </View>
       )}
 
-      {!showLoginForm && !showSignUpForm && !showDirectory && !showAcneDetector &&(
+      {showJournal && (
+        <View style={styles.journalContainer}>
+          <Text style={styles.journalText}>Journal</Text>
+          <Text>No Scans available, please use the detector</Text>
+          <View style={styles.buttonGroup}>
+            <Button title="Directory" onPress={handleDirectoryBack} />
+          </View>
+        </View>
+      )}
+
+      {showInsights && (
+        <View style={styles.insightsContainer}>
+          <Text style={styles.insightsText}>Insights</Text>
+          <Text>No insights available</Text>
+          <View style={styles.buttonGroup}>
+            <Button title="Directory" onPress={handleDirectoryBack} />
+          </View>
+        </View>
+      )}
+
+      {showDiscussion && (
+        <View style={styles.discussionContainer}>
+          <Text style={styles.discussionText}>Discussion</Text>
+          <Text>No discussions available</Text>
+          <View style={styles.buttonGroup}>
+            <Button title="Directory" onPress={handleDirectoryBack} />
+          </View>
+        </View>
+      )}
+
+      {showResults && (
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsText}>Results</Text>
+          {selectedImage && <Image source={{ uri: selectedImage }} style={styles.uploadedImage} />}
+          {/* You can display the results here */}
+        </View>
+      )}
+
+      {!showLoginForm && !showSignUpForm && !showDirectory && !showAcneDetector && !showJournal && !showInsights && !showDiscussion && !showResults &&(
         <View style={styles.buttonContainer}>
           <Button title="Login" onPress={() => setShowLoginForm(true)} />
           <Button title="Sign Up" onPress={() => setShowSignUpForm(true)} />
@@ -197,9 +403,55 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  journalContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+  },
+  journalText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  insightsContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+  },
+  insightsText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  discussionContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+  },
+  discussionText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
   buttonGroup: {
-    marginVertical: 10, // Adjust margin between buttons
+    marginVertical: 10,
     width: '70%',
     maxHeight: 40,
+  },
+  uploadedImage: {
+    width: 300,
+    height: 300,
+    resizeMode: 'contain',
+    marginVertical: 20,
+  },
+  resultsContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+  },
+  resultsText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });
