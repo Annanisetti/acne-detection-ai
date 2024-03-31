@@ -1,15 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const tf = require('@tensorflow/tfjs');
+const { loadGraphModel } = require('@tensorflow/tfjs-converter');
 const { createCanvas, loadImage } = require('canvas');
-
 
 const User = require('./models/user.model.js');
 
 const app = express();
 app.use(express.json())
-
-const model = await.tf.loadLayers('./model.h5');
 
 async function preprocessImage(imageData) {
     const canvas = createCanvas();
@@ -26,10 +24,11 @@ async function preprocessImage(imageData) {
     return preprocessedImage;
 }
 
-
 // Endpoints
 
 app.post('/api/acne-detection', async (req, res) => {
+    const model = await loadGraphModel('./model.json');
+
     const imageData = req.body['image'];
     const preprocessedImage = await preprocessImage(imageData);
 
@@ -59,5 +58,7 @@ mongoose.connect('mongodb+srv://anjannanisetti:WKpTBQCipHDiw6at@cluster0.rxggovj
     console.log('Connected to db');
 })
 .catch(() => {
-    console.log('Sum went wrong')
+    console.log('Sum went wrong');
 });
+
+// http://localhost:3000/api/acne-detection

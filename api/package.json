@@ -10,6 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@tensorflow/tfjs": "^4.17.0",
+    "@tensorflow/tfjs-converter": "^4.17.0",
+    "@tensorflow/tfjs-layers": "^4.17.0",
+    "canvas": "^2.11.2",
     "express": "^4.19.2",
     "mongodb": "^6.5.0",
     "mongoose": "^8.2.4"
